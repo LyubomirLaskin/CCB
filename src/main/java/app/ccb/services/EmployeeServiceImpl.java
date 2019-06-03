@@ -9,7 +9,7 @@ import app.ccb.repositories.EmployeeRepository;
 import app.ccb.util.FileUtil;
 import app.ccb.util.ValidationUtil;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,19 +20,22 @@ import java.util.List;
 @Service
 public class EmployeeServiceImpl implements EmployeeService {
 
-    private static final String EMPLOYEES_JSON_FILE_PATH = "D:\\Repositories\\BitBucket\\ColonialCouncilBank\\src\\main\\resources\\files\\json\\employees.json";
-
     private final EmployeeRepository employeeRepository;
-    private final BranchRepository branchRepository;
+    private final static String EMPLOYEE_JSON_FILE_PATH = "E:\\SoftUni\\JavaDatabase\\Projects\\CCB\\src\\main\\resources\\files\\json\\employees.json";
     private final FileUtil fileUtil;
+    private final Gson gson;
     private final ValidationUtil validationUtil;
+    private final ModelMapper modelMapper;
+    private final BranchRepository branchRepository;
 
     @Autowired
-    public EmployeeServiceImpl(EmployeeRepository employeeRepository, BranchRepository branchRepository, FileUtil fileUtil, ValidationUtil validationUtil) {
+    public EmployeeServiceImpl(EmployeeRepository employeeRepository, FileUtil fileUtil, Gson gson, ValidationUtil validationUtil, ModelMapper modelMapper, BranchRepository branchRepository) {
         this.employeeRepository = employeeRepository;
-        this.branchRepository = branchRepository;
         this.fileUtil = fileUtil;
+        this.gson = gson;
         this.validationUtil = validationUtil;
+        this.modelMapper = modelMapper;
+        this.branchRepository = branchRepository;
     }
 
     @Override
@@ -42,62 +45,59 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     @Override
     public String readEmployeesJsonFile() throws IOException {
-        return this.fileUtil.readFile(EMPLOYEES_JSON_FILE_PATH);
+        return fileUtil.readFile(EMPLOYEE_JSON_FILE_PATH);
     }
 
     @Override
     public String importEmployees(String employees) {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
+        StringBuilder importer = new StringBuilder();
+
         EmployeeImportDto[] employeeImportDtos = gson.fromJson(employees, EmployeeImportDto[].class);
 
-        StringBuilder sb = new StringBuilder();
         for (EmployeeImportDto employeeImportDto : employeeImportDtos) {
-            Employee employee = new Employee();
-            try {
-                String firstName = employeeImportDto.getFullName().split("\\s+")[0];
-                String lastName = employeeImportDto.getFullName().split("\\s+")[1];
-                employee.setFirstName(firstName);
-                employee.setLastName(lastName);
-            } catch (Exception e) {
-                sb.append("Error: Incorrect Data!").append(System.lineSeparator());
+            if(!validationUtil.isValid(employeeImportDto)){
+                importer.append("Error: Incorrect Data!").append(System.lineSeparator());
+
                 continue;
             }
-            Branch branch = this.branchRepository.findByName(employeeImportDto.getBranchName()).orElse(null);
 
-            employee.setSalary(employeeImportDto.getSalary());
-            employee.setStartedOn(LocalDate.parse(employeeImportDto.getStartedOn()));
-            employee.setBranch(branch);
+            Branch branchEntity = this.branchRepository.findByName(employeeImportDto.getBranchName()).orElse(null);
 
-            if (this.validationUtil.isValid(employee)) {
-                this.employeeRepository.saveAndFlush(employee);
-                sb.append(String.format("Successfully imported Employee - %s %s.", employee.getFirstName(), employee.getLastName()))
-                        .append(System.lineSeparator());
-            } else {
-                sb.append("Error: Incorrect Data!").append(System.lineSeparator());
+            if (branchEntity == null){
+                importer.append("Error: Incorrect Data!").append(System.lineSeparator());
+
+                continue;
             }
-        }
 
-        return sb.toString().trim();
+            Employee employeeEntity = this.modelMapper.map(employeeImportDto, Employee.class);
+            employeeEntity.setFirstName(employeeImportDto.getFullName().split("\\s+")[0]);
+            employeeEntity.setLastName(employeeImportDto.getFullName().split("\\s+")[1]);
+            employeeEntity.setStartedOn(LocalDate.parse(employeeImportDto.getStartedOn()));
+            employeeEntity.setBranch(branchEntity);
+
+            this.employeeRepository.saveAndFlush(employeeEntity);
+
+            importer.append(String.format("Successfully imported Employee - %s %s",employeeEntity.getFirstName(),employeeEntity.getLastName())).append(System.lineSeparator());
+
+        }
+        return importer.toString().trim();
     }
 
     @Override
     public String exportTopEmployees() {
-        List<Employee> employees = this.employeeRepository.getAllTopEmployees();
+        List<Employee> employees = this.employeeRepository.exportTopEmployees();
+        StringBuilder exporter = new StringBuilder();
 
-        StringBuilder sb = new StringBuilder();
         for (Employee employee : employees) {
-            sb.append(String.format("Full Name: %s %s", employee.getFirstName(), employee.getLastName())).append(System.lineSeparator());
-            sb.append(String.format("Salary: %.2f", employee.getSalary())).append(System.lineSeparator());
-            sb.append(String.format("Started On: %s", String.valueOf(employee.getStartedOn()))).append(System.lineSeparator());
-            sb.append("Clients: ").append(System.lineSeparator());
-
-            for (Client client : employee.getClients()) {
-                sb.append(String.format("   %s", client.getFullName())).append(System.lineSeparator());
+            exporter.append(String.format("Full Name: %s %s",employee.getFirstName(),employee.getLastName())).append(System.lineSeparator());
+            exporter.append(String.format("Salary: %f",employee.getSalary())).append(System.lineSeparator());
+            exporter.append(String.format("Started On: %s",employee.getStartedOn())).append(System.lineSeparator());
+            exporter.append("Clients").append(System.lineSeparator());
+            List<Client> clients = employee.getClients();
+            for (Client client : clients) {
+                exporter.append(client.getFullName()).append(System.lineSeparator());
             }
-
-            sb.append(System.lineSeparator());
         }
-
-        return sb.toString();
+        return exporter.toString();
     }
 }

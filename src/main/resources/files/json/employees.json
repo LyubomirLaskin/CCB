@@ -1,10 +1,5 @@
 [
 	{
-		"salary" : 1000.78,
-		"started_on" : "2016-06-10",
-		"branch_name" : "SoftUni Foundation"
-	},
-	{
 		"full_name" : "Milty Dyett",
 		"salary" : 213270.78,
 		"started_on" : "2017-06-10",

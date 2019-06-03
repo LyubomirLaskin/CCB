@@ -9,7 +9,7 @@ import app.ccb.repositories.EmployeeRepository;
 import app.ccb.util.FileUtil;
 import app.ccb.util.ValidationUtil;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,19 +18,22 @@ import java.io.IOException;
 @Service
 public class ClientServiceImpl implements ClientService {
 
-    private static final String CLIENTS_JSON_FILE_PATH = "D:\\Repositories\\BitBucket\\ColonialCouncilBank\\src\\main\\resources\\files\\json\\clients.json";
-
     private final ClientRepository clientRepository;
     private final EmployeeRepository employeeRepository;
+    private final static String CLIENT_JSON_FILE_PATH = "E:\\SoftUni\\JavaDatabase\\Projects\\CCB\\src\\main\\resources\\files\\json\\clients.json";
     private final FileUtil fileUtil;
+    private final Gson gson;
     private final ValidationUtil validationUtil;
+    private final ModelMapper modelMapper;
 
     @Autowired
-    public ClientServiceImpl(ClientRepository clientRepository, EmployeeRepository employeeRepository, FileUtil fileUtil, ValidationUtil validationUtil) {
+    public ClientServiceImpl(ClientRepository clientRepository, EmployeeRepository employeeRepository, FileUtil fileUtil, Gson gson, ValidationUtil validationUtil, ModelMapper modelMapper) {
         this.clientRepository = clientRepository;
         this.employeeRepository = employeeRepository;
         this.fileUtil = fileUtil;
+        this.gson = gson;
         this.validationUtil = validationUtil;
+        this.modelMapper = modelMapper;
     }
 
     @Override
@@ -40,63 +43,60 @@ public class ClientServiceImpl implements ClientService {
 
     @Override
     public String readClientsJsonFile() throws IOException {
-        return this.fileUtil.readFile(CLIENTS_JSON_FILE_PATH);
+        return fileUtil.readFile(CLIENT_JSON_FILE_PATH);
     }
 
     @Override
     public String importClients(String clients) {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
-        ClientImportDto[] clientImportDtos = gson.fromJson(clients, ClientImportDto[].class);
+        StringBuilder importer = new StringBuilder();
 
-        StringBuilder sb = new StringBuilder();
+        ClientImportDto[] clientImportDtos = this.gson.fromJson(clients, ClientImportDto[].class);
+
         for (ClientImportDto clientImportDto : clientImportDtos) {
-            if (clientImportDto.getFirstName() == null || clientImportDto.getLastName() == null) {
-                sb.append("Error: Incorrect Data!").append(System.lineSeparator());
+            if (!validationUtil.isValid(clientImportDto)){
+                importer.append("Error: Incorrect Data!").append(System.lineSeparator());
+
                 continue;
             }
+            Employee employeeEntity = this.employeeRepository.findByFullName(clientImportDto.getAppointedEmployee()).orElse(null);
 
-            Client client = this.clientRepository
-                    .findByFullName(String.format("%s %s", clientImportDto.getFirstName(), clientImportDto.getLastName()))
-                    .orElse(null);
+            if (employeeEntity == null){
+                importer.append("Error: Incorrect Data!").append(System.lineSeparator());
 
-            if (client != null) {
-                sb.append("Error: Incorrect Data!").append(System.lineSeparator());
                 continue;
             }
+            Client client = this.clientRepository.findByFullName(clientImportDto.getFirstName() + " " + clientImportDto.getLastName()).orElse(null);
 
-            client = new Client();
-            client.setFullName(String.format("%s %s", clientImportDto.getFirstName(), clientImportDto.getLastName()));
-            client.setAge(clientImportDto.getAge());
+            if (client != null){
+                importer.append("Error: Incorrect Data!").append(System.lineSeparator());
 
-            Employee employee = this.employeeRepository.findByFullName(clientImportDto.getAppointedEmployee()).orElse(null);
-
-            if (employee == null) {
-                sb.append("Error: Incorrect Data!").append(System.lineSeparator());
                 continue;
             }
+            client = this.modelMapper.map(clientImportDto,Client.class);
+            client.setFullName(clientImportDto.getFirstName() + " " + clientImportDto.getLastName());
+            client.getEmployees().add(employeeEntity);
 
-            employee.getClients().add(client);
-            this.employeeRepository.saveAndFlush(employee);
-            sb.append(String.format("Successfully imported Client - %s.", client.getFullName())).append(System.lineSeparator());
+            clientRepository.saveAndFlush(client);
+
+            importer.append(String.format("Successfully imported Client - %s.",client.getFullName())).append(System.lineSeparator());
         }
-
-        return sb.toString().trim();
+        return importer.toString().trim();
     }
 
     @Override
     public String exportFamilyGuy() {
-        Client client = this.clientRepository.getFamilyGuy().stream().findFirst().orElse(null);
+        Client clientEntity = this.clientRepository.exportFamilyGuy().stream().findFirst().orElse(null);
+        StringBuilder exporter = new StringBuilder();
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Full Name: %s", client.getFullName())).append(System.lineSeparator());
-        sb.append(String.format("Age: %d", client.getAge())).append(System.lineSeparator());
-        sb.append(String.format("Bank Account: %s", client.getBankAccount().getAccountNumber())).append(System.lineSeparator());
+        exporter.append(String.format("Full Name: %s",clientEntity.getFullName())).append(System.lineSeparator());
+        exporter.append(String.format("Age: %d", clientEntity.getAge())).append(System.lineSeparator());
+        exporter.append(String.format("Bank Account: %s",clientEntity.getBankAccount().getAccountNumber())).append(System.lineSeparator());
 
-        for (Card card : client.getBankAccount().getCards()) {
-            sb.append(String.format("   Card Number: %s", card.getCardNumber())).append(System.lineSeparator());
-            sb.append(String.format("   Card Status: %s", card.getCardStatus())).append(System.lineSeparator());
+        for (Card card : clientEntity.getBankAccount().getCards()) {
+            exporter.append(String.format("Card Number: %s",card.getCardNumber())).append(System.lineSeparator());
+            exporter.append(String.format("Card Status: %s",card.getCardStatus())).append(System.lineSeparator());
         }
 
-        return sb.toString();
+        return exporter.toString().trim();
     }
 }

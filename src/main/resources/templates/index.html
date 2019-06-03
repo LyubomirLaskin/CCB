@@ -10,8 +10,13 @@
                     <h4>Click the buttons below to export some data from the database.</h4>
                 </div>
                 <div class="col-md-12 d-flex justify-content-center">
-                    <a class="btn btn-primary mx-5 my-5"th:href="@{/export/top-employees}">Export Top Employees</a>
-                    <a class="btn btn-primary mx-5 my-5"th:href="@{/export/family-guy}">Export Family Guy</a>
+                    <th:block th:if="${areImported == true}">
+                        <a class="btn btn-primary mx-5 my-5"th:href="@{/export/top-employees}">Export Top Employees</a>
+                        <a class="btn btn-primary mx-5 my-5"th:href="@{/export/family-guy}">Export Family Guy</a>
+                    </th:block>
+                    <th:block th:if="${areImported == false}">
+                        <p>Import JSON and XML files first.</p>
+                    </th:block>
                 </div>
             </div>
 

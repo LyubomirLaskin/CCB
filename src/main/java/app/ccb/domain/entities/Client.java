@@ -1,23 +1,24 @@
 package app.ccb.domain.entities;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.List;
 
-@Entity
-@Table(name = "clients")
-public class Client extends BaseEntity {
+@Entity(name = "clients")
+public class Client extends BaseEntity{
 
     private String fullName;
     private Integer age;
+    private List<Employee> employees;
     private BankAccount bankAccount;
 
     public Client() {
+        this.employees = new ArrayList<>();
     }
 
     @Column(name = "full_name", nullable = false)
-    @NotNull
     public String getFullName() {
-        return this.fullName;
+        return fullName;
     }
 
     public void setFullName(String fullName) {
@@ -26,17 +27,29 @@ public class Client extends BaseEntity {
 
     @Column(name = "age")
     public Integer getAge() {
-        return this.age;
+        return age;
     }
 
     public void setAge(Integer age) {
         this.age = age;
     }
 
-    @OneToOne(targetEntity = BankAccount.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "bank_account")
+    @ManyToMany(targetEntity = Employee.class)
+    @JoinTable(
+            name = "employees_clients",
+            joinColumns = @JoinColumn(name = "client_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "employee_id", referencedColumnName = "id"))
+    public List<Employee> getEmployees() {
+        return employees;
+    }
+
+    public void setEmployees(List<Employee> employees) {
+        this.employees = employees;
+    }
+
+    @OneToOne(targetEntity = BankAccount.class, mappedBy = "client")
     public BankAccount getBankAccount() {
-        return this.bankAccount;
+        return bankAccount;
     }
 
     public void setBankAccount(BankAccount bankAccount) {

@@ -3,21 +3,18 @@ package app.ccb.domain.dtos;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
+import javax.validation.constraints.NotNull;
 
-public class ClientImportDto implements Serializable {
+public class ClientImportDto {
 
     @Expose
     @SerializedName("first_name")
     private String firstName;
-
     @Expose
     @SerializedName("last_name")
     private String lastName;
-
     @Expose
     private Integer age;
-
     @Expose
     @SerializedName("appointed_employee")
     private String appointedEmployee;
@@ -25,16 +22,18 @@ public class ClientImportDto implements Serializable {
     public ClientImportDto() {
     }
 
+    @NotNull
     public String getFirstName() {
-        return this.firstName;
+        return firstName;
     }
 
     public void setFirstName(String firstName) {
         this.firstName = firstName;
     }
 
+    @NotNull
     public String getLastName() {
-        return this.lastName;
+        return lastName;
     }
 
     public void setLastName(String lastName) {
@@ -42,7 +41,7 @@ public class ClientImportDto implements Serializable {
     }
 
     public Integer getAge() {
-        return this.age;
+        return age;
     }
 
     public void setAge(Integer age) {
@@ -50,7 +49,7 @@ public class ClientImportDto implements Serializable {
     }
 
     public String getAppointedEmployee() {
-        return this.appointedEmployee;
+        return appointedEmployee;
     }
 
     public void setAppointedEmployee(String appointedEmployee) {

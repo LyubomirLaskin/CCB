@@ -1,24 +1,20 @@
 package app.ccb.domain.dtos;
-
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import java.io.Serializable;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
-public class EmployeeImportDto implements Serializable {
+public class EmployeeImportDto {
 
     @Expose
     @SerializedName("full_name")
     private String fullName;
-
     @Expose
     private BigDecimal salary;
-
     @Expose
     @SerializedName("started_on")
     private String startedOn;
-
     @Expose
     @SerializedName("branch_name")
     private String branchName;
@@ -26,8 +22,9 @@ public class EmployeeImportDto implements Serializable {
     public EmployeeImportDto() {
     }
 
+    @NotNull
     public String getFullName() {
-        return this.fullName;
+        return fullName;
     }
 
     public void setFullName(String fullName) {
@@ -35,7 +32,7 @@ public class EmployeeImportDto implements Serializable {
     }
 
     public BigDecimal getSalary() {
-        return this.salary;
+        return salary;
     }
 
     public void setSalary(BigDecimal salary) {
@@ -43,18 +40,19 @@ public class EmployeeImportDto implements Serializable {
     }
 
     public String getStartedOn() {
-        return this.startedOn;
+        return startedOn;
     }
 
     public void setStartedOn(String startedOn) {
         this.startedOn = startedOn;
     }
 
+    @NotNull
     public String getBranchName() {
-        return this.branchName;
+        return branchName;
     }
 
-    public void setBranchName(String branchName) {
-        this.branchName = branchName;
+    public void setBranchName(String branch) {
+        this.branchName = branch;
     }
 }

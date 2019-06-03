@@ -1,13 +1,11 @@
 package app.ccb.domain.entities;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-@Entity
-@Table(name = "employees")
+@Entity(name = "employees")
 public class Employee extends BaseEntity {
 
     private String firstName;
@@ -21,9 +19,8 @@ public class Employee extends BaseEntity {
     }
 
     @Column(name = "first_name", nullable = false)
-    @NotNull
     public String getFirstName() {
-        return this.firstName;
+        return firstName;
     }
 
     public void setFirstName(String firstName) {
@@ -31,9 +28,8 @@ public class Employee extends BaseEntity {
     }
 
     @Column(name = "last_name", nullable = false)
-    @NotNull
     public String getLastName() {
-        return this.lastName;
+        return lastName;
     }
 
     public void setLastName(String lastName) {
@@ -42,7 +38,7 @@ public class Employee extends BaseEntity {
 
     @Column(name = "salary")
     public BigDecimal getSalary() {
-        return this.salary;
+        return salary;
     }
 
     public void setSalary(BigDecimal salary) {
@@ -51,7 +47,7 @@ public class Employee extends BaseEntity {
 
     @Column(name = "started_on")
     public LocalDate getStartedOn() {
-        return this.startedOn;
+        return startedOn;
     }
 
     public void setStartedOn(LocalDate startedOn) {
@@ -59,23 +55,19 @@ public class Employee extends BaseEntity {
     }
 
     @ManyToOne(targetEntity = Branch.class)
-    @JoinColumn(name = "branch", referencedColumnName = "id", nullable = false)
-    @NotNull
+    @JoinColumn(name = "branch_id",
+                referencedColumnName = "id")
     public Branch getBranch() {
-        return this.branch;
+        return branch;
     }
 
     public void setBranch(Branch branch) {
         this.branch = branch;
     }
 
-    @ManyToMany(targetEntity = Client.class, cascade = CascadeType.ALL)
-    @JoinTable(
-            name = "employees_clients",
-            joinColumns = @JoinColumn(name = "employee_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "client_id", referencedColumnName = "id"))
+    @ManyToMany(targetEntity = Client.class, mappedBy = "employees")
     public List<Client> getClients() {
-        return this.clients;
+        return clients;
     }
 
     public void setClients(List<Client> clients) {

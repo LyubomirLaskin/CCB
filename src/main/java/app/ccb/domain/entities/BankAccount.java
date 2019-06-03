@@ -1,12 +1,10 @@
 package app.ccb.domain.entities;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.List;
 
-@Entity
-@Table(name = "bank_accounts")
+@Entity(name = "bank_accounts")
 public class BankAccount extends BaseEntity{
 
     private String accountNumber;
@@ -18,9 +16,8 @@ public class BankAccount extends BaseEntity{
     }
 
     @Column(name = "account_number", nullable = false)
-    @NotNull
     public String getAccountNumber() {
-        return this.accountNumber;
+        return accountNumber;
     }
 
     public void setAccountNumber(String accountNumber) {
@@ -29,25 +26,26 @@ public class BankAccount extends BaseEntity{
 
     @Column(name = "balance")
     public BigDecimal getBalance() {
-        return this.balance;
+        return balance;
     }
 
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
 
-    @OneToOne(mappedBy = "bankAccount", cascade = CascadeType.ALL)
+    @OneToOne(targetEntity = Client.class)
+    @JoinColumn(name = "client_id", referencedColumnName = "id")
     public Client getClient() {
-        return this.client;
+        return client;
     }
 
     public void setClient(Client client) {
         this.client = client;
     }
 
-    @OneToMany(mappedBy = "bankAccount", targetEntity = Card.class)
+    @OneToMany(targetEntity = Card.class, mappedBy = "bankAccount")
     public List<Card> getCards() {
-        return this.cards;
+        return cards;
     }
 
     public void setCards(List<Card> cards) {

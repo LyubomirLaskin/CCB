@@ -1,22 +1,21 @@
 package app.ccb.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 
 public class FileUtilImpl implements FileUtil {
-
+    @Override
     public String readFile(String filePath) throws IOException {
-        File file = new File(filePath);
-        BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+        BufferedReader reader = new BufferedReader(
+                new InputStreamReader(
+                        new FileInputStream(
+                                new File(filePath))));
 
         StringBuilder sb = new StringBuilder();
-        String currentLine = "";
-        while ((currentLine = bufferedReader.readLine()) != null) {
-            sb.append(currentLine).append(System.lineSeparator());
-        }
+        String line;
 
+        while ((line = reader.readLine()) != null){
+            sb.append(line).append(System.lineSeparator());
+        }
         return sb.toString().trim();
     }
 }

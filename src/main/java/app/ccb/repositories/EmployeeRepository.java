@@ -12,15 +12,16 @@ import java.util.Optional;
 @Repository
 public interface EmployeeRepository extends JpaRepository<Employee, Integer> {
 
-    @Query("FROM Employee e WHERE concat(e.firstName, ' ', e.lastName) = :fullName")
-    Optional<Employee> findByFullName(@Param("fullName") String fullName);
-
-    @Query(
+    @Query("" +
             "SELECT e " +
             "FROM app.ccb.domain.entities.Employee e " +
-            "JOIN e.clients c " +
-            "GROUP BY e.id " +
-            "ORDER BY size(e.clients) DESC, e.id "
-    )
-    List<Employee> getAllTopEmployees();
+            "WHERE concat(e.firstName,' ', e.lastName) = :fullName")
+    Optional<Employee> findByFullName(@Param("fullName") String name);
+
+    @Query("" +
+            "SELECT e " +
+            "FROM app.ccb.domain.entities.Employee e " +
+            "WHERE size(e.clients) > 0" +
+            "ORDER BY size(e.clients) DESC, e.id")
+    List<Employee> exportTopEmployees();
 }

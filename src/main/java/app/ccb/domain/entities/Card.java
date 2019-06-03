@@ -1,11 +1,9 @@
 package app.ccb.domain.entities;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 
-@Entity
-@Table(name = "cards")
-public class Card extends BaseEntity{
+@Entity(name = "card")
+public class Card extends BaseEntity {
 
     private String cardNumber;
     private String cardStatus;
@@ -15,9 +13,8 @@ public class Card extends BaseEntity{
     }
 
     @Column(name = "card_number", nullable = false)
-    @NotNull
     public String getCardNumber() {
-        return this.cardNumber;
+        return cardNumber;
     }
 
     public void setCardNumber(String cardNumber) {
@@ -25,19 +22,18 @@ public class Card extends BaseEntity{
     }
 
     @Column(name = "card_status", nullable = false)
-    @NotNull
     public String getCardStatus() {
-        return this.cardStatus;
+        return cardStatus;
     }
 
     public void setCardStatus(String cardStatus) {
         this.cardStatus = cardStatus;
     }
 
-    @ManyToOne(targetEntity = BankAccount.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "bank_account")
+    @ManyToOne(targetEntity = BankAccount.class)
+    @JoinColumn(name = "bank_account_id", referencedColumnName = "id")
     public BankAccount getBankAccount() {
-        return this.bankAccount;
+        return bankAccount;
     }
 
     public void setBankAccount(BankAccount bankAccount) {

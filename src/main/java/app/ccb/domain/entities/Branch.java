@@ -2,11 +2,8 @@ package app.ccb.domain.entities;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
 
-@Entity
-@Table(name = "branches")
+@Entity(name = "branches")
 public class Branch extends BaseEntity {
 
     private String name;
@@ -15,9 +12,8 @@ public class Branch extends BaseEntity {
     }
 
     @Column(name = "name", nullable = false)
-    @NotNull
     public String getName() {
-        return this.name;
+        return name;
     }
 
     public void setName(String name) {

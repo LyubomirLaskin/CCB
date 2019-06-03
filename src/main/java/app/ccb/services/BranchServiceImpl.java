@@ -6,7 +6,6 @@ import app.ccb.repositories.BranchRepository;
 import app.ccb.util.FileUtil;
 import app.ccb.util.ValidationUtil;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,18 +15,19 @@ import java.io.IOException;
 @Service
 public class BranchServiceImpl implements BranchService {
 
-    private static final String BRANCHES_JSON_FILE_PATH = "D:\\Repositories\\BitBucket\\ColonialCouncilBank\\src\\main\\resources\\files\\json\\branches.json";
-
     private final BranchRepository branchRepository;
+    private final static String BRANCH_JSON_FILE_PATH = "E:\\SoftUni\\JavaDatabase\\Projects\\CCB\\src\\main\\resources\\files\\json\\branches.json";
     private final FileUtil fileUtil;
     private final ValidationUtil validationUtil;
+    private final Gson gson;
     private final ModelMapper modelMapper;
 
     @Autowired
-    public BranchServiceImpl(BranchRepository branchRepository, FileUtil fileUtil, ValidationUtil validationUtil, ModelMapper modelMapper) {
+    public BranchServiceImpl(BranchRepository branchRepository, FileUtil fileUtil, ValidationUtil validationUtil, Gson gson, ModelMapper modelMapper) {
         this.branchRepository = branchRepository;
         this.fileUtil = fileUtil;
         this.validationUtil = validationUtil;
+        this.gson = gson;
         this.modelMapper = modelMapper;
     }
 
@@ -38,29 +38,26 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     public String readBranchesJsonFile() throws IOException {
-        return this.fileUtil.readFile(BRANCHES_JSON_FILE_PATH);
+        return fileUtil.readFile(BRANCH_JSON_FILE_PATH);
     }
 
     @Override
     public String importBranches(String branchesJson) {
-        Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().setPrettyPrinting().create();
-        BranchImportDto[] branchImportDtos = gson.fromJson(branchesJson, BranchImportDto[].class);
+        StringBuilder importer = new StringBuilder();
+        BranchImportDto[] branchImportDtos = this.gson.fromJson(branchesJson, BranchImportDto[].class);
 
-        StringBuilder sb = new StringBuilder();
-        for (BranchImportDto branchImportDto : branchImportDtos) {
-            Branch branch = this.modelMapper.map(branchImportDto, Branch.class);
+        for (BranchImportDto Dto : branchImportDtos) {
+            if (!validationUtil.isValid(Dto)){
+                importer.append("Error: Incorrect Data!");
 
-            if (this.validationUtil.isValid(branch)) {
-                this.branchRepository.saveAndFlush(branch);
-                sb.append(String.format("Successfully imported Branch - %s", branch.getName()))
-                        .append(System.lineSeparator());
-            } else {
-                sb.append("Error: Incorrect Data!").append(System.lineSeparator());
+                continue;
             }
+
+            Branch branchEntity = this.modelMapper.map(Dto, Branch.class);
+            this.branchRepository.saveAndFlush(branchEntity);
+
+            importer.append(String.format("Successfully imported Branch – %s.", branchEntity.getName())).append(System.lineSeparator());
         }
-
-        return sb.toString().trim();
+        return importer.toString().trim();
     }
-
-
 }
